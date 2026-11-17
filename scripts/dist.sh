@@ -18,4 +18,12 @@ codesign --force -s "$SIGN_ID" --identifier dev.vogel.ferry --timestamp=none dis
 cp target/x86_64-unknown-linux-musl/release/ferry dist/linux-x64/ferry
 cp target/aarch64-unknown-linux-musl/release/ferry dist/linux-arm64/ferry
 cp target/x86_64-pc-windows-gnu/release/ferry.exe dist/windows-x64/ferry.exe
-ls -l dist/*/*
+
+# Release assets, named the way install.sh and install.ps1 fetch them.
+rm -rf dist/release && mkdir -p dist/release
+cp dist/macos-arm64/ferry dist/release/ferry-macos-arm64
+cp dist/linux-x64/ferry dist/release/ferry-linux-x64
+cp dist/linux-arm64/ferry dist/release/ferry-linux-arm64
+cp dist/windows-x64/ferry.exe dist/release/ferry-windows-x64.exe
+(cd dist/release && shasum -a 256 ferry-* > SHA256SUMS)
+ls -l dist/release

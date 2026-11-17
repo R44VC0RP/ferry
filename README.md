@@ -14,17 +14,24 @@ ferry peers                                # list machines and whether they're r
 
 ## Setup
 
-You need [Tailscale](https://tailscale.com) running on every machine, and
-[Rust](https://rustup.rs) to build.
+You need [Tailscale](https://tailscale.com) running on every machine.
 
-1. Install on each machine (on Windows, use an Administrator shell):
+1. Install on each machine.
+
+   macOS and Linux:
 
    ```sh
-   cargo install --git https://github.com/R44VC0RP/ferry
-   ferry install
+   curl -fsSL https://raw.githubusercontent.com/R44VC0RP/ferry/main/install.sh | sh
    ```
 
-   `ferry install` starts the background service and sets it to start at boot.
+   Windows, in an Administrator PowerShell:
+
+   ```powershell
+   irm https://raw.githubusercontent.com/R44VC0RP/ferry/main/install.ps1 | iex
+   ```
+
+   This downloads the binary, starts the background service and sets it to
+   start at boot. Open a new terminal afterwards if `ferry` isn't found.
 
 2. Pair. On one machine:
 
@@ -42,6 +49,10 @@ You need [Tailscale](https://tailscale.com) running on every machine, and
    machine already paired, so you pair each one only once.
 
 3. Check with `ferry peers`.
+
+Prebuilt binaries cover macOS (Apple silicon), Linux (x64, arm64) and Windows
+(x64). Anywhere else, build it with [Rust](https://rustup.rs):
+`cargo install --git https://github.com/R44VC0RP/ferry && ferry install`.
 
 ## Commands
 
