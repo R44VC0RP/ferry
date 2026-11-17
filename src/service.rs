@@ -102,10 +102,39 @@ pub fn register(paths: &Paths, binary: &Path) -> Result<String> {
         out = escape(&out.display().to_string()),
     );
     let path = plist_path(paths);
+
+    // Updating an install that is already loaded: just stop the daemon and
+    // let launchd start the new binary. Unloading the job instead would kill
+    // this process too when the update was started through ferry itself.
+    if fs::read_to_string(&path).is_ok_and(|existing| existing == plist) {
+        for domain in [format!("gui/{}", uid()), format!("user/{}", uid())] {
+            let target = format!("{domain}/{LABEL}");
+            let Ok((true, printed)) = run(Command::new("launchctl").args(["print", &target])) else { continue };
+            let pid = printed
+                .lines()
+                .find_map(|line| line.trim().strip_prefix("pid = "))
+                .and_then(|pid| pid.trim().parse::<i32>().ok());
+            match pid {
+                Some(pid) => {
+                    // SAFETY: `kill` only sends a signal; a stale pid fails
+                    // with ESRCH and touches no memory.
+                    unsafe { libc::kill(pid, libc::SIGTERM) };
+                }
+                None => {
+                    let (ok, text) = run(Command::new("launchctl").args(["kickstart", &target]))?;
+                    if !ok {
+                        bail!("launchctl could not start the agent: {text}");
+                    }
+                }
+            }
+            return Ok(format!("launchd agent {LABEL} ({domain}), restarted"));
+        }
+    }
+
     if let Some(dir) = path.parent() {
         fs::create_dir_all(dir)?;
     }
-    fs::write(&path, plist).with_context(|| format!("writing {}", path.display()))?;
+    fs::write(&path, &plist).with_context(|| format!("writing {}", path.display()))?;
 
     // A logged-in desktop has a gui domain; a machine reached only over SSH
     // has just the user domain.
